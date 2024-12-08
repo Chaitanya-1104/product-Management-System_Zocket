@@ -18,7 +18,7 @@ API: http://localhost:8080<br>
 RabbitMQ Management UI: http://localhost:15672 (Default credentials: guest/guest)<br>
 PostgreSQL: localhost:5432 (Use provided credentials)<br>
 Redis: localhost:6379<br>
-###Implementation Details:<br>
+### Implementation Details:<br>
 I hadn't implemented the complete features mentioned in the assignment but i tried to complete the major functionalities like:<br>
   - Created the endpoints for uploading abd retreiving products.<br>
   - Connected Successfully to postgre sql database.<br>
