@@ -1,38 +1,66 @@
 version: '3.8'
 
 services:
-  app:
-    build: .
+  api:
+    build:
+      context: .
+      args:
+        BINARY_PATH: cmd/api
     ports:
       - "8080:8080"
     environment:
-      - POSTGRES_HOST=database
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=post123
-      - POSTGRES_DB=product_management
-      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
-      - REDIS_HOST=redis
+      DATABASE_URL: "postgres://postgres:post123@database:5432/product_management"
+      REDIS_ADDR: "redis:6379"
+      RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672/"
+      QUEUE_NAME: "image_processing_queue"
     depends_on:
       - database
       - rabbitmq
       - redis
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      args:
+        BINARY_PATH: cmd/worker
+    environment:
+      DATABASE_URL: "postgres://postgres:post123@database:5432/product_management"
+      REDIS_ADDR: "redis:6379"
+      RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672/"
+      QUEUE_NAME: "image_processing_queue"
+    depends_on:
+      - database
+      - rabbitmq
+    restart: unless-stopped
 
   database:
-    image: postgres:14
+    image: postgres:14-alpine
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: post123
       POSTGRES_DB: product_management
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
 
   rabbitmq:
-    image: rabbitmq:3-management
+    image: rabbitmq:3-management-alpine
     ports:
       - "5672:5672"
       - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    restart: unless-stopped
 
   redis:
-    image: redis:alpine
+    image: redis:7-alpine
     ports:
       - "6379:6379"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
