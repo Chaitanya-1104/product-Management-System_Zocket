@@ -49,24 +49,19 @@ func (s *ProductService) CreateProduct(ctx context.Context, input models.Product
 }
 
 func (s *ProductService) GetProductByID(ctx context.Context, id string) (models.Product, error) {
-	// ✅ CHECK REDIS CACHE FIRST
 	cachedData, err := s.cache.Get(ctx, id).Result()
 	if err == nil {
-		// Cache hit! Unmarshal and return without DB query
 		var product models.Product
 		if err := json.Unmarshal([]byte(cachedData), &product); err == nil {
 			return product, nil
 		}
 	}
-	// Cache miss or error, continue to DB
 
-	// ✅ QUERY DATABASE
 	product, err := s.repository.GetByID(ctx, id)
 	if err != nil {
 		return models.Product{}, err
 	}
 
-	// ✅ CACHE THE RESULT FOR FUTURE REQUESTS
 	productJSON, _ := json.Marshal(product)
 	if err := s.cache.Set(ctx, id, productJSON, 10*time.Minute).Err(); err != nil {
 		// Log but don't fail if cache set fails
